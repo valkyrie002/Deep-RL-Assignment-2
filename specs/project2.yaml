@@ -1,0 +1,434 @@
+# CS 591 Project 2 specifications for SLM-Lab v5.2.0.
+# Install as: slm_lab/spec/project2/project2.yaml
+# Every run must supply a seed, for example: -s seed=11
+
+_meta_lunar: &meta_lunar
+  distributed: false
+  rigorous_eval: 1
+  eval_frequency: 10000
+  log_frequency: 1000
+  max_session: 1
+  max_trial: 1
+  random_seed: "${seed}"
+
+_meta_acrobot: &meta_acrobot
+  distributed: false
+  rigorous_eval: 1
+  eval_frequency: 10000
+  log_frequency: 1000
+  max_session: 1
+  max_trial: 1
+  random_seed: "${seed}"
+
+_meta_breakout: &meta_breakout
+  distributed: false
+  rigorous_eval: 1
+  eval_frequency: 100000
+  log_frequency: 10000
+  max_session: 1
+  max_trial: 1
+  random_seed: "${seed}"
+
+_lunar_env: &lunar_env
+  name: LunarLander-v3
+  num_envs: 4
+  max_t: null
+  max_frame: 300000
+
+_acrobot_env: &acrobot_env
+  name: Acrobot-v1
+  num_envs: 4
+  max_t: null
+  max_frame: 300000
+
+_breakout_env: &breakout_env
+  name: ALE/Breakout-v5
+  num_envs: 16
+  max_t: null
+  max_frame: 10000000
+
+_reinforce_algorithm: &reinforce_algorithm
+  name: Reinforce
+  action_pdtype: default
+  action_policy: default
+  center_return: true
+  explore_var_spec: null
+  gamma: 0.99
+  entropy_coef_spec:
+    name: linear_decay
+    start_val: 0.001
+    end_val: 0.0
+    start_step: 0
+    end_step: 300000
+  training_frequency: 512
+
+_reinforce_net: &reinforce_net
+  type: MLPNet
+  hid_layers: [128, 128]
+  hid_layers_activation: tanh
+  init_fn: orthogonal_
+  clip_grad_val: 0.5
+  loss_spec:
+    name: MSELoss
+  optim_spec:
+    name: Adam
+    lr: 0.0005
+  gpu: auto
+
+_sarsa_epsilon_algorithm: &sarsa_epsilon_algorithm
+  name: SARSA
+  action_pdtype: Argmax
+  action_policy: epsilon_greedy
+  explore_var_spec:
+    name: linear_decay
+    start_val: 1.0
+    end_val: 0.05
+    start_step: 0
+    end_step: 50000
+  gamma: 0.99
+  training_frequency: 32
+
+_sarsa_boltzmann_algorithm: &sarsa_boltzmann_algorithm
+  name: SARSA
+  action_pdtype: Categorical
+  action_policy: boltzmann
+  explore_var_spec:
+    name: linear_decay
+    start_val: 3.0
+    end_val: 0.3
+    start_step: 0
+    end_step: 50000
+  gamma: 0.99
+  training_frequency: 32
+
+_sarsa_net: &sarsa_net
+  type: MLPNet
+  hid_layers: [128]
+  hid_layers_activation: tanh
+  clip_grad_val: 0.35
+  loss_spec:
+    name: MSELoss
+  optim_spec:
+    name: RMSprop
+    lr: 0.008
+  gpu: auto
+
+_dqn_epsilon_algorithm: &dqn_epsilon_algorithm
+  name: DQN
+  action_pdtype: Argmax
+  action_policy: epsilon_greedy
+  explore_var_spec:
+    name: linear_decay
+    start_val: 1.0
+    end_val: 0.04
+    start_step: 0
+    end_step: 50000
+  gamma: 0.982
+  training_batch_iter: 1
+  training_iter: 4
+  training_frequency: 1
+  training_start_step: 32
+
+_dqn_boltzmann_algorithm: &dqn_boltzmann_algorithm
+  name: DQN
+  action_pdtype: Categorical
+  action_policy: boltzmann
+  explore_var_spec:
+    name: linear_decay
+    start_val: 3.0
+    end_val: 0.3
+    start_step: 0
+    end_step: 50000
+  gamma: 0.982
+  training_batch_iter: 1
+  training_iter: 4
+  training_frequency: 1
+  training_start_step: 32
+
+_dqn_memory: &dqn_memory
+  name: Replay
+  batch_size: 32
+  max_size: 50000
+  use_cer: false
+
+_dqn_lunar_net: &dqn_lunar_net
+  type: MLPNet
+  hid_layers: [256, 128]
+  hid_layers_activation: relu
+  clip_grad_val: 10.0
+  loss_spec:
+    name: SmoothL1Loss
+  optim_spec:
+    name: AdamW
+    lr: 0.000724
+  update_type: replace
+  update_frequency: 100
+  gpu: auto
+
+_dqn_acrobot_epsilon_algorithm: &dqn_acrobot_epsilon_algorithm
+  name: DQN
+  action_pdtype: Argmax
+  action_policy: epsilon_greedy
+  explore_var_spec:
+    name: linear_decay
+    start_val: 1.0
+    end_val: 0.027
+    start_step: 0
+    end_step: 20000
+  gamma: 0.987
+  training_batch_iter: 2
+  training_iter: 2
+  training_frequency: 1
+  training_start_step: 32
+
+_dqn_acrobot_boltzmann_algorithm: &dqn_acrobot_boltzmann_algorithm
+  name: DQN
+  action_pdtype: Categorical
+  action_policy: boltzmann
+  explore_var_spec:
+    name: linear_decay
+    start_val: 3.0
+    end_val: 0.3
+    start_step: 0
+    end_step: 20000
+  gamma: 0.987
+  training_batch_iter: 2
+  training_iter: 2
+  training_frequency: 1
+  training_start_step: 32
+
+_dqn_acrobot_net: &dqn_acrobot_net
+  type: MLPNet
+  hid_layers: [128, 128]
+  hid_layers_activation: relu
+  clip_grad_val: 1.0
+  loss_spec:
+    name: SmoothL1Loss
+  optim_spec:
+    name: Adam
+    lr: 0.00108
+  update_type: replace
+  update_frequency: 100
+  gpu: auto
+
+_dqn_atari_epsilon_algorithm: &dqn_atari_epsilon_algorithm
+  name: DQN
+  action_pdtype: Argmax
+  action_policy: epsilon_greedy
+  explore_var_spec:
+    name: linear_decay
+    start_val: 1.0
+    end_val: 0.01
+    start_step: 10000
+    end_step: 1000000
+  gamma: 0.99
+  training_batch_iter: 1
+  training_iter: 4
+  training_frequency: 4
+  training_start_step: 10000
+
+_dqn_atari_boltzmann_algorithm: &dqn_atari_boltzmann_algorithm
+  name: DQN
+  action_pdtype: Categorical
+  action_policy: boltzmann
+  explore_var_spec:
+    name: linear_decay
+    start_val: 3.0
+    end_val: 0.3
+    start_step: 10000
+    end_step: 1000000
+  gamma: 0.99
+  training_batch_iter: 1
+  training_iter: 4
+  training_frequency: 4
+  training_start_step: 10000
+
+_dqn_atari_memory: &dqn_atari_memory
+  name: Replay
+  batch_size: 32
+  max_size: 200000
+  use_cer: false
+
+_dqn_atari_net: &dqn_atari_net
+  type: ConvNet
+  conv_hid_layers:
+    - [32, 8, 4, 0, 1]
+    - [64, 4, 2, 0, 1]
+    - [64, 3, 1, 0, 1]
+  fc_hid_layers: [256]
+  hid_layers_activation: relu
+  init_fn: null
+  batch_norm: false
+  clip_grad_val: 10.0
+  loss_spec:
+    name: SmoothL1Loss
+  optim_spec:
+    name: AdamW
+    lr: 0.0001
+  update_type: replace
+  update_frequency: 1000
+  gpu: auto
+
+# Part 2: LunarLander
+
+r_lr_low:
+  agent:
+    name: Reinforce
+    algorithm: {<<: *reinforce_algorithm}
+    memory: {name: OnPolicyBatchReplay}
+    net: {<<: *reinforce_net}
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+r_lr_high:
+  agent:
+    name: Reinforce
+    algorithm: {<<: *reinforce_algorithm}
+    memory: {name: OnPolicyBatchReplay}
+    net:
+      <<: *reinforce_net
+      optim_spec: {name: Adam, lr: 0.002}
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+s_eps:
+  agent:
+    name: SARSA
+    algorithm: {<<: *sarsa_epsilon_algorithm}
+    memory: {name: OnPolicyBatchReplay}
+    net: {<<: *sarsa_net}
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+s_boltz:
+  agent:
+    name: SARSA
+    algorithm: {<<: *sarsa_boltzmann_algorithm}
+    memory: {name: OnPolicyBatchReplay}
+    net: {<<: *sarsa_net}
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+d_eps_100:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_epsilon_algorithm}
+    memory: {<<: *dqn_memory}
+    net: {<<: *dqn_lunar_net}
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+d_boltz_100:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_boltzmann_algorithm}
+    memory: {<<: *dqn_memory}
+    net: {<<: *dqn_lunar_net}
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+d_eps_1000:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_epsilon_algorithm}
+    memory: {<<: *dqn_memory}
+    net:
+      <<: *dqn_lunar_net
+      update_frequency: 1000
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+d_boltz_1000:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_boltzmann_algorithm}
+    memory: {<<: *dqn_memory}
+    net:
+      <<: *dqn_lunar_net
+      update_frequency: 1000
+  env: {<<: *lunar_env}
+  meta: {<<: *meta_lunar}
+
+# Part 3 CPU extension: Acrobot
+
+acrobot_eps_100:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_acrobot_epsilon_algorithm}
+    memory: {<<: *dqn_memory}
+    net: {<<: *dqn_acrobot_net}
+  env: {<<: *acrobot_env}
+  meta: {<<: *meta_acrobot}
+
+acrobot_boltz_100:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_acrobot_boltzmann_algorithm}
+    memory: {<<: *dqn_memory}
+    net: {<<: *dqn_acrobot_net}
+  env: {<<: *acrobot_env}
+  meta: {<<: *meta_acrobot}
+
+acrobot_eps_1000:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_acrobot_epsilon_algorithm}
+    memory: {<<: *dqn_memory}
+    net:
+      <<: *dqn_acrobot_net
+      update_frequency: 1000
+  env: {<<: *acrobot_env}
+  meta: {<<: *meta_acrobot}
+
+acrobot_boltz_1000:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_acrobot_boltzmann_algorithm}
+    memory: {<<: *dqn_memory}
+    net:
+      <<: *dqn_acrobot_net
+      update_frequency: 1000
+  env: {<<: *acrobot_env}
+  meta: {<<: *meta_acrobot}
+
+# Part 3 GPU extension: Breakout
+
+breakout_eps_100:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_atari_epsilon_algorithm}
+    memory: {<<: *dqn_atari_memory}
+    net:
+      <<: *dqn_atari_net
+      update_frequency: 100
+  env: {<<: *breakout_env}
+  meta: {<<: *meta_breakout}
+
+breakout_boltz_100:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_atari_boltzmann_algorithm}
+    memory: {<<: *dqn_atari_memory}
+    net:
+      <<: *dqn_atari_net
+      update_frequency: 100
+  env: {<<: *breakout_env}
+  meta: {<<: *meta_breakout}
+
+breakout_eps_1000:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_atari_epsilon_algorithm}
+    memory: {<<: *dqn_atari_memory}
+    net: {<<: *dqn_atari_net}
+  env: {<<: *breakout_env}
+  meta: {<<: *meta_breakout}
+
+breakout_boltz_1000:
+  agent:
+    name: DQN
+    algorithm: {<<: *dqn_atari_boltzmann_algorithm}
+    memory: {<<: *dqn_atari_memory}
+    net: {<<: *dqn_atari_net}
+  env: {<<: *breakout_env}
+  meta: {<<: *meta_breakout}
