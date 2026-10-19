@@ -1,0 +1,99 @@
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -5,5 +5,5 @@ description = "Modular Deep Reinforcement Learning framework in PyTorch."
+ readme = "README.md"
+-requires-python = ">=3.12.0"
++requires-python = ">=3.12.0,<3.14"
+ license = {text = "MIT"}
+ authors = [
+     {name = "kengz", email = "kengzwl@gmail.com"},
+@@ -76,7 +76,7 @@ classifiers = [
+ default-groups = ["ml"]
+ # Restrict resolution to platforms we actually use (macOS dev + Linux training)
+ environments = [
+-    "sys_platform == 'darwin'",
++    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+     "sys_platform == 'linux' and platform_machine == 'x86_64'",
+ ]
+ 
+diff --git a/slm_lab/experiment/control.py b/slm_lab/experiment/control.py
+--- a/slm_lab/experiment/control.py
++++ b/slm_lab/experiment/control.py
+@@ -53,6 +53,9 @@ class Session:
+         if self._rigorous_eval:
+             with util.ctx_lab_mode("eval"):
+                 self.eval_env = make_env(self.spec)
++            eval_seed = int(self.spec["meta"]["random_seed"]) + 10000
++            self.eval_env.action_space.seed(eval_seed)
++            self.eval_env.reset(seed=eval_seed)
+         else:
+             self.eval_env = self.env
+         if self.index == 0:
+@@ -105,7 +105,9 @@ class Session:
+ 
+     def run_rl(self):
+         """Run the main RL loop until clock.max_frame"""
+-        state, info = self.env.reset()
++        random_seed = self.spec["meta"]["random_seed"]
++        self.env.action_space.seed(random_seed)
++        state, info = self.env.reset(seed=random_seed)
+         is_venv = self.env.is_venv
+ 
+         with torch_profiler_context() as prof_step:
+diff --git a/slm_lab/lib/ml_util.py b/slm_lab/lib/ml_util.py
+--- a/slm_lab/lib/ml_util.py
++++ b/slm_lab/lib/ml_util.py
+@@ -13,5 +13,6 @@ import operator
+ import pandas as pd
+ import pydash as ps
++import random
+ import time
+ import torch
+ import torch.multiprocessing as mp
+@@ -120,13 +121,19 @@ def set_cuda_id(spec):
+ 
+ 
+ def set_random_seed(spec):
+-    '''Generate and set random seed for relevant modules, and record it in spec.meta.random_seed'''
+-    trial = spec['meta']['trial']
+-    session = spec['meta']['session']
+-    random_seed = int(1e5 * (trial or 0) + 1e3 * (session or 0) + time.time())
++    '''Use a configured seed when present; otherwise generate one as SLM-Lab normally does.'''
++    meta_spec = spec['meta']
++    configured_seed = meta_spec.get('random_seed')
++    if configured_seed is None:
++        trial = meta_spec['trial']
++        session = meta_spec['session']
++        random_seed = int(1e5 * (trial or 0) + 1e3 * (session or 0) + time.time())
++    else:
++        random_seed = int(configured_seed)
++    random.seed(random_seed)
+     torch.cuda.manual_seed_all(random_seed)
+     torch.manual_seed(random_seed)
+     np.random.seed(random_seed)
+-    spec['meta']['random_seed'] = random_seed
++    meta_spec['random_seed'] = random_seed
+     return random_seed
+ 
+ 
+diff --git a/slm_lab/spec/spec_util.py b/slm_lab/spec/spec_util.py
+--- a/slm_lab/spec/spec_util.py
++++ b/slm_lab/spec/spec_util.py
+@@ -130,6 +130,6 @@ def extend_meta_spec(spec, experiment_ts=None):
+         "prepath": None,
+         "git_sha": util.get_git_sha(),
+-        "random_seed": None,
++        "random_seed": ps.get(spec, "meta.random_seed", None),
+     }
+     spec["meta"].update(extended_meta_spec)
+     return spec
+@@ -232,5 +232,8 @@ def _override_dev_spec(spec):
+     spec["meta"]["max_session"] = 1
+     spec["meta"]["max_trial"] = 2
++    spec["env"]["max_frame"] = min(int(spec["env"]["max_frame"]), 20000)
++    spec["meta"]["log_frequency"] = min(int(spec["meta"].get("log_frequency", 2000)), 2000)
++    spec["meta"]["eval_frequency"] = min(int(spec["meta"].get("eval_frequency", 2000)), 2000)
+     return spec
+ 
+ 
