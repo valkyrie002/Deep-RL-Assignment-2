@@ -39,6 +39,8 @@ the Post-run Reflection section.
 
 - Complete this after Stage 3 selects the exploration rule but before launching
   the 1,000-update runs.
+  - Selected Stage 3 exploration rule:
+    - Epsilon-greedy
 - Do you expect an update every 100 or every 1,000 training updates to learn
   faster?
   - I expect an update every 100 training updates to learn faster, since this allows it to make the most of new information in the learning process by updating the target network more frequently.
