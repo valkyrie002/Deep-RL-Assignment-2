@@ -52,8 +52,11 @@ the Post-run Reflection section.
 ### Generalization
 
 - Which DQN comparison will you transfer to Acrobot and Breakout?
+  - I will do epsilon-greedy vs Boltzmann
 - Do you expect the LunarLander ordering to hold in Acrobot? Why?
+  - I do not, because Acrobot is a much more complicated problem I expect that exploring the problem space will be much more challenging. For this reason, epsilon greedy, which explores randomly, will be less effective than Boltzmann selection, which will guide the model towards exploring more promising directions.
 - Do you expect the LunarLander ordering to hold in Breakout? Why?
+  - N/A, I chose the CPU version
 
 ## Post-run Reflection
 
