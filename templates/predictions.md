@@ -41,8 +41,11 @@ the Post-run Reflection section.
   the 1,000-update runs.
 - Do you expect an update every 100 or every 1,000 training updates to learn
   faster?
+  - I expect an update every 100 training updates to learn faster, since this allows it to make the most of new information in the learning process by updating the target network more frequently.
 - Which do you expect to be more stable?
+  - I expect an update every 1000 training updates to be more stable, since it doesn't immediately incorporate new information in the target network to generate loss, instead only updating the online network on stable target configurations.
 - Why?
+  - Updating more frequently allows the network to make use of its gained knowledge to learn faster with a more up to date target, but these updates are less stable since the updates to the target network are less reliable when we've done less training updates on the online network.
 
 ### Generalization
 
